@@ -1,5 +1,6 @@
 package com.example.krogerdanieltalks
 
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,10 +13,11 @@ import com.example.krogerdanieltalks.utils.Constants
 import kotlinx.coroutines.launch
 
 class MyViewModel : ViewModel(){
-    private var accessToken : String = ""
 
     private val _krogerData = MutableLiveData("No Data")
+    private val _accessToken = MutableLiveData("No Data")
     val krogerData: LiveData<String> get() = _krogerData
+    val accessToken: LiveData<String> get() = _accessToken
 
     init {
         viewModelScope.launch {
@@ -27,12 +29,9 @@ class MyViewModel : ViewModel(){
     suspend fun getToken()
     {
         _krogerData.value = RetrofitClient.krogerAPIService.getToken("client_credentials", "product.compact").toString()
-        val accessToken : String = RetrofitClient.krogerAPIService.getToken("client_credentials", "product.compact").access_token
-        this.accessToken = accessToken
+        _accessToken.value = RetrofitClient.krogerAPIService.getToken("client_credentials", "product.compact").access_token
+
+
     }
 
-    suspend fun getAccessToken(): String
-    {
-        return this.accessToken
-    }
 }

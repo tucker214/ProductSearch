@@ -1,5 +1,6 @@
 package com.example.krogerdanieltalks
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -10,16 +11,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.krogerdanieltalks.apiModels.token.Token
+import com.example.krogerdanieltalks.Client.RetrofitClient
 import com.example.krogerdanieltalks.ui.theme.KrogerDanielTalksTheme
+import com.example.krogerdanieltalks.utils.Constants
+import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
+    var accessToken: String? = null
+    val viewModel: MyViewModel = MyViewModel()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -27,10 +30,13 @@ class MainActivity : ComponentActivity() {
             KrogerDanielTalksTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     KrogerData(
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding), viewModel = viewModel()
                     )
 
-                  //Log.d("Token: ", "My Token: $Token.access_token")
+                    val preferences: SharedPreferences = getSharedPreferences("myPrefs", MODE_PRIVATE)
+                    preferences.edit().putString("access_token", viewModel.accessToken.observeAsState().value).apply()
+
+                  Log.d("Token: ", "My Token: ${preferences.getString("access_token", "")}")
                 }
             }
         }
@@ -41,13 +47,15 @@ class MainActivity : ComponentActivity() {
 fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel()) {
 
     val data = viewModel.krogerData.observeAsState().value
+    val token = viewModel.accessToken.observeAsState().value
 
-
-    if(data != null)
+    if(token != null) {
         Text(
-        text = data,
-        modifier = modifier
-    )
+            text = token,
+            modifier = modifier
+        )
+    }
+
 }
 
 @Preview(showBackground = true)
