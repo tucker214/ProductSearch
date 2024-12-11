@@ -15,13 +15,9 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.krogerdanieltalks.Client.RetrofitClient
 import com.example.krogerdanieltalks.ui.theme.KrogerDanielTalksTheme
-import com.example.krogerdanieltalks.utils.Constants
-import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
-    var accessToken: String? = null
     val viewModel: MyViewModel = MyViewModel()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,12 +42,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel()) {
 
-    val data = viewModel.krogerData.observeAsState().value
-    val token = viewModel.accessToken.observeAsState().value
-
-    if(token != null) {
+    //val data = viewModel.krogerData.observeAsState().value
+    //val token = viewModel.accessToken.observeAsState().value
+    //val product = viewModel.productId.observeAsState().value
+    val productTerm = viewModel.productTerm.observeAsState().value
+    if(productTerm != null) {
         Text(
-            text = token,
+            text = productTerm,
             modifier = modifier
         )
     }
