@@ -18,12 +18,6 @@ object RetrofitClient {
 
     private val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
 
-/*
-    val mediaType : MediaType? = "application/x-www-form-urlencoded".toMediaTypeOrNull()
-    val body: RequestBody = "grant_type=client_credentials&scope=product.compact"
-        .toRequestBody(mediaType);
-*/
-
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(logging)
         .build()

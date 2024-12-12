@@ -33,8 +33,9 @@ interface KrogerAPIService {
     @Headers("Accept: application/json")
     @GET("v1/products/")
     suspend fun searchProductByTerm(@Header("Authorization") token: String,
-                                    @Query("filter.brand") brand: String,
+//                                    @Query("filter.brand") brand: String,
                                     @Query("filter.term") term: String,
-                                    @Query("filter.locationId") locationId: String) : ProductTerm
+                                    @Query("filter.locationId") locationId: String,
+                                    @Query("filter.limit") limit: String) : ProductTerm
 
 }
