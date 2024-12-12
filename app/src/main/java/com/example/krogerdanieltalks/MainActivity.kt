@@ -3,10 +3,14 @@ package com.example.krogerdanieltalks
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.Button
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,6 +24,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,6 +56,7 @@ import coil3.compose.AsyncImage
 import com.example.krogerdanieltalks.apiModels.token.productTerm.Data
 import com.example.krogerdanieltalks.apiModels.token.productTerm.ProductTerm
 import com.example.krogerdanieltalks.ui.theme.KrogerDanielTalksTheme
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 
 class MainActivity : ComponentActivity() {
@@ -106,7 +113,12 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    itemTerm.value = text
                },
                    Modifier.width(240.dp),
-                   textStyle = TextStyle(color = Color.Black)
+                   textStyle = TextStyle(color = Color.Black),
+                   placeholder = {Text("Enter item to search")},
+                   trailingIcon = {Icon(Icons.Default.Clear,
+                       contentDescription = "clear text",
+                       modifier = Modifier.clickable { itemTerm.value = "" },
+                       tint = Color.Black)}
 
 
                )
@@ -164,6 +176,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                        border = BorderStroke(0.5.dp, Color.LightGray),
                        colors = CardDefaults.cardColors(containerColor = Color.White),
                        modifier = Modifier.padding(0.dp, 5.dp)
+                           .width(400.dp)
                    )
                    {
                        Row(
@@ -173,10 +186,10 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                model = productMediumImageUrl,
                                contentDescription = null,
                                modifier = Modifier
-                                   .size(75.dp)
+                                   .size(80.dp)
                                    .aspectRatio(1f)
                                    .align(Alignment.CenterVertically)
-                                   .padding(10.dp)
+                                   .padding(10.dp, 30.dp, 5.dp, 0.dp)
                            )
                            Text(
                                fontWeight = FontWeight.Bold,
@@ -184,10 +197,11 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                maxLines = 2,
                                overflow = TextOverflow.Ellipsis,
                                modifier = modifier
-                                   .padding(5.dp)
+                                   .padding(0.dp, 30.dp, 10.dp, 0.dp)
                                    .wrapContentHeight(align = Alignment.CenterVertically)
 
                            )
+
                            /*                       Text(
                            fontWeight = FontWeight.Bold,
                            text = productMediumImageUrl,
@@ -197,6 +211,22 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                .padding(5.dp)
                                .wrapContentHeight(align = Alignment.CenterVertically)
                        )*/
+
+                          // Button(onClick = {}) { }
+                       }
+                       Column (modifier = Modifier.align(Alignment.End)
+                           .wrapContentHeight()){
+                            Row () {
+                               Text(
+                                   fontWeight = FontWeight.Bold,
+                                   text = "upc: " + productTermData!![i].upc.toString(),
+                                   modifier = Modifier
+                                       .padding(0.dp, 0.dp, 10.dp, 10.dp)
+                                       .wrapContentHeight()
+
+                               )
+                           }
+
                        }
                    }
                }
