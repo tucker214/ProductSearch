@@ -1,10 +1,10 @@
 package com.example.krogerdanieltalks
 
 import android.content.SharedPreferences
+import android.graphics.Paint.Align
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.widget.Button
+import android.widget.Scroller
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,27 +24,26 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,9 +53,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.krogerdanieltalks.apiModels.token.productTerm.Data
-import com.example.krogerdanieltalks.apiModels.token.productTerm.ProductTerm
 import com.example.krogerdanieltalks.ui.theme.KrogerDanielTalksTheme
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -91,7 +89,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
     var productTermData = viewModel.productTermData.observeAsState().value!!.data
     var productMediumImageUrl = ""
     var test : String
-
+    var newSearch = false
     var isRefresh = false
    if(productTermData != null) {
 
@@ -107,7 +105,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
            Row(
                modifier = Modifier
                    .fillMaxWidth()
-
+                   .padding(0.dp, 30.dp, 0.dp, 15.dp)
            ) {
                OutlinedTextField(value = itemTerm.value, onValueChange = { text ->
                    itemTerm.value = text
@@ -124,111 +122,157 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                )
                Spacer(modifier = Modifier.width(10.dp))
 
-               Button(onClick = {viewModel.setTerm(itemTerm.value)
+               Button(onClick = {
+                   if (itemTerm.value.isNotEmpty())
+                        viewModel.setTerm(itemTerm.value)
+                        newSearch = true
                }) {
                    Text(text = "Search",
                        maxLines = 1,
                        fontSize = 15.sp
 
                    )
-
-
                }
            }
 
            productTermData = refreshData(viewModel, productTermData)
 
-       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(10.dp)) {
+       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(10.dp))
+       {
            items(1)
            { i ->
                for (i in 0..<productTermData!!.size) {
+                   //pop up box
+                   var showPopUp = remember { mutableStateOf(false) }
 
-                   var perspectiveIndex: Int = -1
-                   var sizeIndex: Int = 2
-                   try {
-                       for (j in 0..<productTermData!![i].images!!.size) {
-                           test = productTermData!![i].images!![j].perspective.toString()
-                           perspectiveIndex = test.indexOf("front", 0, true)
-
-                           if (perspectiveIndex >= 0) {
-                               //productMediumImageUrl =  productTermData[i].images!![j].sizes!![2].url.toString()
-                               perspectiveIndex = j
-                               break
-                           }
-                       }
-
-                       productMediumImageUrl = productTermData!![i].images!![perspectiveIndex]
-                           .sizes!![sizeIndex].url.toString()
-
-                   } catch (indexOutOfBounds: IndexOutOfBoundsException) {
-                       indexOutOfBounds.printStackTrace()
-                       productMediumImageUrl = "No Image"
-
+                 //  Button (
+                   //    onClick = {
+                       //TODO
+                   //}){
+                       var perspectiveIndex: Int = -1
+                       var sizeIndex: Int = 2
+                       var hasAisle = true
                        try {
-                           sizeIndex = 1
+                           for (j in 0..<productTermData!![i].images!!.size) {
+                               test = productTermData!![i].images!![j].perspective.toString()
+                               perspectiveIndex = test.indexOf("front", 0, true)
+
+                               if (perspectiveIndex >= 0) {
+                                   perspectiveIndex = j
+                                   break
+                               }
+                           }
+
+                           productMediumImageUrl = productTermData!![i].images!![perspectiveIndex]
+                               .sizes!![sizeIndex].url.toString()
+
+                           if (productTermData!![i].aisleLocations!!.isEmpty())
+                               hasAisle = false;
+
+
                        } catch (indexOutOfBounds: IndexOutOfBoundsException) {
                            indexOutOfBounds.printStackTrace()
                            productMediumImageUrl = "No Image"
+
+                           try {
+                               sizeIndex = 1
+                           } catch (indexOutOfBounds: IndexOutOfBoundsException) {
+                               indexOutOfBounds.printStackTrace()
+                               productMediumImageUrl = "No Image"
+                           }
                        }
-                   }
 
-                   Card(
-                       border = BorderStroke(0.5.dp, Color.LightGray),
-                       colors = CardDefaults.cardColors(containerColor = Color.White),
-                       modifier = Modifier.padding(0.dp, 5.dp)
-                           .width(400.dp)
-                   )
-                   {
-                       Row(
+                       Card(
+                           border = BorderStroke(0.5.dp, Color.LightGray),
+                           colors = CardDefaults.cardColors(containerColor = Color.White),
+                           modifier = Modifier
+                               .padding(0.dp, 5.dp)
+                               .width(400.dp)
+                       )
+                       {
+                           Row(
 
-                       ) {
-                           AsyncImage(
-                               model = productMediumImageUrl,
-                               contentDescription = null,
-                               modifier = Modifier
-                                   .size(80.dp)
-                                   .aspectRatio(1f)
-                                   .align(Alignment.CenterVertically)
-                                   .padding(10.dp, 30.dp, 5.dp, 0.dp)
-                           )
-                           Text(
-                               fontWeight = FontWeight.Bold,
-                               text = productTermData!![i].description.toString(),
-                               maxLines = 2,
-                               overflow = TextOverflow.Ellipsis,
-                               modifier = modifier
-                                   .padding(0.dp, 30.dp, 10.dp, 0.dp)
-                                   .wrapContentHeight(align = Alignment.CenterVertically)
-
-                           )
-
-                           /*                       Text(
-                           fontWeight = FontWeight.Bold,
-                           text = productMediumImageUrl,
-                           maxLines = 2,
-                           overflow = TextOverflow.Ellipsis,
-                           modifier = modifier
-                               .padding(5.dp)
-                               .wrapContentHeight(align = Alignment.CenterVertically)
-                       )*/
-
-                          // Button(onClick = {}) { }
-                       }
-                       Column (modifier = Modifier.align(Alignment.End)
-                           .wrapContentHeight()){
-                            Row () {
+                           ) {
+                               AsyncImage(
+                                   model = productMediumImageUrl,
+                                   contentDescription = null,
+                                   modifier = Modifier
+                                       .size(140.dp)
+                                       .aspectRatio(1f)
+                                       .align(Alignment.CenterVertically)
+                                       .padding(30.dp, 30.dp, 30.dp, 0.dp)
+                               )
                                Text(
                                    fontWeight = FontWeight.Bold,
-                                   text = "upc: " + productTermData!![i].upc.toString(),
-                                   modifier = Modifier
-                                       .padding(0.dp, 0.dp, 10.dp, 10.dp)
-                                       .wrapContentHeight()
+                                   text = productTermData!![i].description.toString(),
+                                   maxLines = 2,
+                                   overflow = TextOverflow.Ellipsis,
+                                   modifier = modifier
+                                       .padding(0.dp, 30.dp, 10.dp, 0.dp)
+                                       .wrapContentHeight(align = Alignment.CenterVertically)
 
                                )
                            }
+                           Row(
+                               modifier = Modifier
+                                   .wrapContentHeight()
+                                   .wrapContentWidth()
+                                   .align(Alignment.CenterHorizontally)
+                           ) {
+                               if (hasAisle) {
+                                   if (productTermData!![i].aisleLocations!![0].number.toString() == "152") {
+                                       Text(
+                                           fontWeight = FontWeight.Bold,
+                                           text = "A: " + "DAIRY",
+                                           modifier = Modifier
+                                               .padding(0.dp, 0.dp, 10.dp, 10.dp)
+                                               .wrapContentHeight()
+                                               .align(Alignment.Bottom)
+                                       )
 
+
+                                   } else {
+                                       Text(
+                                           fontWeight = FontWeight.Bold,
+                                           text = "A: " + productTermData!![i].aisleLocations!![0].number.toString()
+                                                   + " B: " + productTermData!![i].aisleLocations!![0].bayNumber.toString()
+                                                   + " S: " + productTermData!![i].aisleLocations!![0].shelfNumber.toString()
+                                                   + " P: " + productTermData!![i].aisleLocations!![0].shelfPositionInBay.toString(),
+                                           fontSize = 14.sp,
+                                           modifier = Modifier
+                                               .padding(10.dp, 0.dp, 10.dp, 10.dp)
+                                               .wrapContentHeight()
+                                               .wrapContentWidth()
+                                               .align(Alignment.Bottom)
+                                       )
+                                   }
+                               } else {
+                                   if (productTermData!![i].taxonomies == null)
+
+                                       Text(
+                                           fontWeight = FontWeight.Bold,
+                                           text = "DEP: " + "MISC/OTHER",
+                                           fontSize = 14.sp,
+                                           modifier = Modifier
+                                               .padding(10.dp, 0.dp, 10.dp, 10.dp)
+                                               .wrapContentHeight()
+                                               .align(Alignment.Bottom)
+                                       )
+                               }
+                                   Text(
+                                       fontWeight = FontWeight.Bold,
+                                       text = productTermData!![i].upc.toString(),
+                                       fontSize = 14.sp,
+                                       modifier = Modifier
+                                           .padding(0.dp, 0.dp, 10.dp, 10.dp)
+                                           .wrapContentHeight()
+                                           .wrapContentWidth()
+                                           .align(Alignment.Bottom)
+
+                                   )
+                           }
                        }
-                   }
+                   //}
                }
            }
        }
@@ -263,5 +307,10 @@ fun GreetingPreview() {
 @Composable
 fun refreshData(viewModel: MyViewModel, data : List<Data>?) : List<Data>? {
     return viewModel.productTermData.observeAsState().value!!.data
+
+}
+
+fun resetScroll()
+{
 
 }
