@@ -9,8 +9,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,10 +28,13 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -43,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -91,6 +98,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
     var test : String
     var newSearch = false
     var isRefresh = false
+    var canSearch = true
    if(productTermData != null) {
 
        var itemTerm = remember {
@@ -124,8 +132,14 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
 
                Button(onClick = {
                    if (itemTerm.value.isNotEmpty())
-                        viewModel.setTerm(itemTerm.value)
-                        newSearch = true
+                       if (itemTerm.value.length >= 3) {
+                           viewModel.setTerm(itemTerm.value)
+                           newSearch = true
+                           canSearch = true
+                       }
+                   else{
+                       canSearch = false
+                   }
                }) {
                    Text(text = "Search",
                        maxLines = 1,
@@ -139,16 +153,23 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
 
        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(10.dp))
        {
+
            items(1)
-           { i ->
+           { item ->
                for (i in 0..<productTermData!!.size) {
                    //pop up box
                    var showPopUp = remember { mutableStateOf(false) }
 
-                 //  Button (
-                   //    onClick = {
-                       //TODO
-                   //}){
+                  Button (
+                      modifier = Modifier.fillMaxSize().background(color = Color.Gray)
+                          .border(2.dp, color = Color.White, RoundedCornerShape(1.2.dp))
+                          .padding(0.dp),
+                           shape = RoundedCornerShape(1.dp),
+                      colors = ButtonColors(containerColor = Color.LightGray, contentColor = Color.Black, disabledContentColor = Color.Blue, disabledContainerColor = Color.Red),
+                           onClick = {
+                       showPopUp.value = !showPopUp.value
+
+                   }){
                        var perspectiveIndex: Int = -1
                        var sizeIndex: Int = 2
                        var hasAisle = true
@@ -232,10 +253,12 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
 
 
                                    } else {
+
                                        Text(
                                            fontWeight = FontWeight.Bold,
                                            text = "A: " + productTermData!![i].aisleLocations!![0].number.toString()
-                                                   + " B: " + productTermData!![i].aisleLocations!![0].bayNumber.toString()
+                                                   + " B: " + productTermData!![i].aisleLocations!![0].side.toString()
+                                                   + "-" + productTermData!![i].aisleLocations!![0].bayNumber.toString()
                                                    + " S: " + productTermData!![i].aisleLocations!![0].shelfNumber.toString()
                                                    + " P: " + productTermData!![i].aisleLocations!![0].shelfPositionInBay.toString(),
                                            fontSize = 14.sp,
@@ -272,9 +295,19 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                    )
                            }
                        }
-                   //}
+                   }
+
+                   if(showPopUp.value)
+                   {
+                       Box()
+                       {
+
+                       }
+                   }
                }
            }
+
+
        }
        }
    }
