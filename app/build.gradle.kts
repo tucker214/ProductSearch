@@ -40,6 +40,8 @@ android {
 }
 
 dependencies {
+    //Zxing
+    //implementation ("com.google.zxing:core:4.3.0")
     //Compose ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     //Compose LiveData

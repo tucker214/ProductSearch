@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -49,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -160,34 +162,24 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    //pop up box
                    var showPopUp = remember { mutableStateOf(false) }
 
-                  Button (
-                      modifier = Modifier.fillMaxSize().background(color = Color.Gray)
-                          .border(2.dp, color = Color.White, RoundedCornerShape(1.2.dp))
-                          .padding(0.dp),
-                           shape = RoundedCornerShape(1.dp),
-                      colors = ButtonColors(containerColor = Color.LightGray, contentColor = Color.Black, disabledContentColor = Color.Blue, disabledContainerColor = Color.Red),
-                           onClick = {
-                       showPopUp.value = !showPopUp.value
+                   var perspectiveIndex: Int = -1
+                   var sizeIndex: Int = 2
+                   var hasAisle = true
+                   try {
+                       for (j in 0..<productTermData!![i].images!!.size) {
+                           test = productTermData!![i].images!![j].perspective.toString()
+                           perspectiveIndex = test.indexOf("front", 0, true)
 
-                   }){
-                       var perspectiveIndex: Int = -1
-                       var sizeIndex: Int = 2
-                       var hasAisle = true
-                       try {
-                           for (j in 0..<productTermData!![i].images!!.size) {
-                               test = productTermData!![i].images!![j].perspective.toString()
-                               perspectiveIndex = test.indexOf("front", 0, true)
-
-                               if (perspectiveIndex >= 0) {
-                                   perspectiveIndex = j
-                                   break
-                               }
+                           if (perspectiveIndex >= 0) {
+                               perspectiveIndex = j
+                               break
                            }
+                       }
 
-                           productMediumImageUrl = productTermData!![i].images!![perspectiveIndex]
-                               .sizes!![sizeIndex].url.toString()
+                       productMediumImageUrl = productTermData!![i].images!![perspectiveIndex]
+                           .sizes!![sizeIndex].url.toString()
 
-                           if (productTermData!![i].aisleLocations!!.isEmpty())
+                       if (productTermData!![i].aisleLocations!!.isEmpty())
                                hasAisle = false;
 
 
@@ -202,15 +194,49 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                productMediumImageUrl = "No Image"
                            }
                        }
-
+                        val shape = RoundedCornerShape(30.dp)
                        Card(
-                           border = BorderStroke(0.5.dp, Color.LightGray),
                            colors = CardDefaults.cardColors(containerColor = Color.White),
                            modifier = Modifier
                                .padding(0.dp, 5.dp)
+                               .border(1.dp, Color.LightGray, shape)
+                               .clip(shape)
                                .width(400.dp)
+                               .then(Modifier.clickable {
+                                   Modifier.wrapContentSize()
+                                   showPopUp.value = !showPopUp.value
+                               })
                        )
                        {
+                           if (productTermData!![i].items != null) {
+                               if (productTermData!![i].items!![0].inventory != null) {
+                                   var stockLevel =
+                                       productTermData!![i].items!![0].inventory!!.stockLevel
+                                   if (productTermData!![i].items!![0].inventory!!.stockLevel!!.contains("HIGH"))
+                                   {
+                                       stockLevel = "HIGH"
+                                   }
+                                   else if (productTermData!![i].items!![0].inventory!!.stockLevel!!.contains("LOW"))
+                                   {
+                                       stockLevel = "LOW"
+                                   }
+                                   else if (productTermData!![i].items!![0].inventory!!.stockLevel!!.contains("TEMPORARILY"))
+                                   {
+                                       stockLevel = "OUT OF"
+                                   }
+                                   else
+                                   {
+                                       stockLevel = "UNAVAILABLE"
+                                   }
+
+                                   Row(Modifier.padding(30.dp, 20.dp, 0.dp, 0.dp)) {
+                                       Text(
+                                           text = "$stockLevel STOCK"
+                                       )
+                                   }
+
+                               }
+                           }
                            Row(
 
                            ) {
@@ -231,7 +257,6 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                    modifier = modifier
                                        .padding(0.dp, 30.dp, 10.dp, 0.dp)
                                        .wrapContentHeight(align = Alignment.CenterVertically)
-
                                )
                            }
                            Row(
@@ -241,19 +266,6 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                    .align(Alignment.CenterHorizontally)
                            ) {
                                if (hasAisle) {
-                                   if (productTermData!![i].aisleLocations!![0].number.toString() == "152") {
-                                       Text(
-                                           fontWeight = FontWeight.Bold,
-                                           text = "A: " + "DAIRY",
-                                           modifier = Modifier
-                                               .padding(0.dp, 0.dp, 10.dp, 10.dp)
-                                               .wrapContentHeight()
-                                               .align(Alignment.Bottom)
-                                       )
-
-
-                                   } else {
-
                                        Text(
                                            fontWeight = FontWeight.Bold,
                                            text = "A: " + productTermData!![i].aisleLocations!![0].number.toString()
@@ -268,13 +280,12 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                                .wrapContentWidth()
                                                .align(Alignment.Bottom)
                                        )
-                                   }
                                } else {
                                    if (productTermData!![i].taxonomies == null)
 
                                        Text(
                                            fontWeight = FontWeight.Bold,
-                                           text = "DEP: " + "MISC/OTHER",
+                                           text = "DEP: " + "GROCERY",
                                            fontSize = 14.sp,
                                            modifier = Modifier
                                                .padding(10.dp, 0.dp, 10.dp, 10.dp)
@@ -295,7 +306,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                    )
                            }
                        }
-                   }
+
 
                    if(showPopUp.value)
                    {
