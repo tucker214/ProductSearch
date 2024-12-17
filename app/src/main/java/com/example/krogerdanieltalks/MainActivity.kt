@@ -161,7 +161,8 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                for (i in 0..<productTermData!!.size) {
                    //pop up box
                    var showPopUp = remember { mutableStateOf(false) }
-
+                   var stockLevel : String?
+                   //stockLevel = "UNAVAILABLE"
                    var perspectiveIndex: Int = -1
                    var sizeIndex: Int = 2
                    var hasAisle = true
@@ -210,7 +211,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                        {
                            if (productTermData!![i].items != null) {
                                if (productTermData!![i].items!![0].inventory != null) {
-                                   var stockLevel =
+                                   stockLevel =
                                        productTermData!![i].items!![0].inventory!!.stockLevel
                                    if (productTermData!![i].items!![0].inventory!!.stockLevel!!.contains("HIGH"))
                                    {
@@ -224,10 +225,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                    {
                                        stockLevel = "OUT OF"
                                    }
-                                   else
-                                   {
-                                       stockLevel = "UNAVAILABLE"
-                                   }
+
 
                                    Row(Modifier.padding(30.dp, 20.dp, 0.dp, 0.dp)) {
                                        Text(
@@ -235,6 +233,15 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                        )
                                    }
 
+                               }
+                               else
+                               {
+                                   stockLevel = "UNAVAILABLE"
+                                   Row(Modifier.padding(30.dp, 20.dp, 0.dp, 0.dp)) {
+                                       Text(
+                                           text = "$stockLevel"
+                                       )
+                                   }
                                }
                            }
                            Row(

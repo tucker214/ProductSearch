@@ -61,9 +61,18 @@ class MyViewModel : ViewModel(){
 
     fun setTerm(string: String)
     {
-        _productTerm.value = string
-        val job = viewModelScope.launch { searchProductByTerm(_productTerm.value!!) }
-        Log.d("Whereisdata", _productTerm.value!!)
+        try {
+            _productTerm.value = string
+            val job = viewModelScope.launch { searchProductByTerm(_productTerm.value!!) }
+            Log.d("Whereisdata", _productTerm.value!!)
+        } catch (e: Exception)
+        {
+            viewModelScope.launch {
+                getToken()
+                searchProductByTerm(_productTerm.value!!)
+            }
+        }
+
 
 
 
