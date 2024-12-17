@@ -50,10 +50,20 @@ class MyViewModel : ViewModel(){
 
     suspend fun searchProductByTerm(term: String)
     {
-
+        try {
+                _productTermData.value = RetrofitClient.krogerAPIService
+                .searchProductByTerm("Bearer ${_accessToken.value!!}",
+                    term, LOCATION_ID_ARL_HEIGHTS, "50")
+        } catch (e: retrofit2.HttpException)
+        {
+            e.printStackTrace()
+            getToken()
+            Log.d("ExceptionInvalidToken", "Invalid Token")
             _productTermData.value = RetrofitClient.krogerAPIService
-            .searchProductByTerm("Bearer ${_accessToken.value!!}",
-                term, LOCATION_ID_ARL_HEIGHTS, "50")
+                .searchProductByTerm("Bearer ${_accessToken.value!!}",
+                    term, LOCATION_ID_ARL_HEIGHTS, "50")
+        }
+
 
         Log.d("Whereisdatainfun", term)
 
@@ -61,21 +71,9 @@ class MyViewModel : ViewModel(){
 
     fun setTerm(string: String)
     {
-        try {
-            _productTerm.value = string
-            val job = viewModelScope.launch { searchProductByTerm(_productTerm.value!!) }
-            Log.d("Whereisdata", _productTerm.value!!)
-        } catch (e: Exception)
-        {
-            viewModelScope.launch {
-                getToken()
-                searchProductByTerm(_productTerm.value!!)
-            }
-        }
-
-
-
-
+        _productTerm.value = string
+        viewModelScope.launch { searchProductByTerm(_productTerm.value!!) }
+        Log.d("Whereisdata", _productTerm.value!!)
 
     }
 

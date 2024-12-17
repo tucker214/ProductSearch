@@ -59,6 +59,10 @@ object RetrofitClient {
                 e.printStackTrace()
                 var msg = ""
                 when (e) {
+                    is retrofit2.HttpException -> {
+                        msg = "Invalid Token"
+                    }
+                    
                     is SocketTimeoutException -> {
                         msg = "Timeout - Please check your internet connection"
                     }
