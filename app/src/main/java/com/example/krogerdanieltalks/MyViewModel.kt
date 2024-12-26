@@ -20,11 +20,14 @@ class MyViewModel : ViewModel(){
     private val _productId = MutableLiveData("No data for product upc search")
     private val _productTerm = MutableLiveData("No data for product term search")
     private val _productTermData = MutableLiveData(ProductTerm(null, null))
+    private val _shouldResetScroll = MutableLiveData(false)
     val krogerData: LiveData<String> get() = _krogerData
     val accessToken: LiveData<String> get() = _accessToken
     val productId: LiveData<String> get() = _productId
     val productTerm: LiveData<String> get() = _productTerm
     val productTermData: LiveData<ProductTerm> get() = _productTermData
+    val shouldResetScroll: LiveData<Boolean> get() = _shouldResetScroll
+
     var searchTerm = "Cheese"
 
     init {
@@ -96,6 +99,11 @@ class MyViewModel : ViewModel(){
         if (upc.length == 13)
             viewModelScope.launch { getProduct(_productId.value!!) }
         Log.d("Whereisupc", _productId.value!!)
+    }
+
+    fun updateScrollToTop(scroll: Boolean)
+    {
+        _shouldResetScroll.postValue(scroll)
     }
 
 }

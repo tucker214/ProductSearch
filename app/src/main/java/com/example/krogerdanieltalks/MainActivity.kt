@@ -41,11 +41,15 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -57,6 +61,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -70,8 +75,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.substring
 import androidx.compose.ui.tooling.preview.Preview
@@ -173,6 +181,17 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
     var productTermData = viewModel.productTermData.observeAsState().value!!.data
     var productMediumImageUrl = ""
     var test : String
+    val scrollToTop by viewModel.shouldResetScroll.observeAsState()
+    val listState = rememberLazyListState()
+    if (scrollToTop == true)
+    {
+
+        LaunchedEffect(key1 = scrollToTop) {
+            listState.scrollToItem(0)
+            viewModel.updateScrollToTop(false)
+        }
+    }
+
    if(productTermData != null) {
 
        var itemTerm = remember {
@@ -189,12 +208,6 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    .fillMaxWidth()
                    .padding(0.dp, 30.dp, 0.dp, 15.dp)
            ) {
-               Button(onClick = {
-                   //mContext.startActivity(Intent(mContext, MainActivity2::class.java))
-                //shouldScan.value = true
-                   scanLauncher.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.UPC_A))
-               }){
-               }
                if (viewModel.productId.value!!.length == 13)
                    viewModel.setTerm(viewModel.productId.value!!)
                zxing = c_upc
@@ -207,13 +220,38 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    Modifier.size(240.dp, 50.dp),
                    textStyle = TextStyle(color = Color.Black),
                    placeholder = {Text("Search items")},
-                   trailingIcon = {Icon(Icons.Default.Clear,
-                       contentDescription = "clear text",
-                       modifier = Modifier.clickable { itemTerm.value = "" },
-                       tint = Color.Black)},
-                   shape = RoundedCornerShape(50)
+                   trailingIcon = {
+                       if (itemTerm.value.isNotEmpty()) {
+                           Icon(
+                               Icons.Default.Clear,
+                               contentDescription = "clear text",
+                               modifier = Modifier.clickable { itemTerm.value = "" },
+                               tint = Color.Black
+                           )
+                       }
+                       else
+                       {
+                           Icon(
+                               painter = painterResource(R.drawable.ic_action_name),
+                               contentDescription = "clear text",
+                               modifier = Modifier.clickable {
+                                   scanLauncher.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.UPC_A)) },
+                               tint = Color.Black,
+                           )
 
+                       }
+                   },
+                   shape = RoundedCornerShape(50),
+                   keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                   keyboardActions = KeyboardActions(onSearch =
+                   {
+                       if (itemTerm.value.isNotEmpty())
+                           if (itemTerm.value.length >= 3) {
+                               viewModel.setTerm(itemTerm.value)
+                               viewModel.updateScrollToTop(true)
+                           }
 
+                   })
                )
                Spacer(modifier = Modifier.width(10.dp))
 
@@ -221,6 +259,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    if (itemTerm.value.isNotEmpty())
                        if (itemTerm.value.length >= 3) {
                            viewModel.setTerm(itemTerm.value)
+                           viewModel.updateScrollToTop(true)
                        }
                }) {
                    Text(text = "Search",
@@ -233,7 +272,8 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
 
            productTermData = refreshData(viewModel, productTermData)
 
-       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(10.dp))
+       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(10.dp), state =
+       listState)
        {
 
            items(1)
