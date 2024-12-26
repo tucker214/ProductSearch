@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -97,6 +98,7 @@ import com.google.zxing.client.android.Intents.Scan
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 import org.w3c.dom.Text
 import java.lang.reflect.TypeVariable
 import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
@@ -385,6 +387,55 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                        .padding(0.dp, 30.dp, 10.dp, 0.dp)
                                        .wrapContentHeight(align = Alignment.CenterVertically)
                                )
+                           }
+                           Row (modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                               if (productTermData!![i].items != null)
+                               {
+                                  if (productTermData!![i].items!![0].price != null)
+                                  {
+                                      Box (modifier = Modifier.align(Alignment.Bottom)
+                                          .background(color = Color.White)
+                                          .wrapContentWidth()
+                                          .wrapContentHeight()
+                                          .height(27.dp)
+                                          .align(Alignment.Bottom)
+                                      ) {
+                                          Text(
+                                              "Regular: $" + productTermData!![i].items!![0].price?.regular.toString(),
+                                              fontWeight = FontWeight.SemiBold,
+                                              fontSize = 14.sp,
+                                              modifier = Modifier
+                                                  .padding(10.dp, 0.dp, 10.dp, 10.dp)
+                                                  .wrapContentHeight()
+                                                  .wrapContentWidth()
+
+                                          )
+                                      }
+
+                                        if (productTermData!![i].items!![0].price?.promo?.toInt() != 0) {
+                                            Box (modifier = Modifier.align(Alignment.Bottom)
+                                                .background(color = Color.Yellow)
+                                                .wrapContentWidth()
+                                                .wrapContentHeight()
+                                                .height(27.dp)
+                                                ){
+                                                Text(
+                                                    "Sale: $" + productTermData!![i].items!![0].price?.promo.toString(),
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 14.sp,
+                                                    modifier = Modifier
+                                                        .padding(10.dp, 0.dp, 10.dp, 10.dp)
+                                                        .wrapContentHeight()
+                                                        .wrapContentWidth()
+
+
+                                                )
+                                            }
+                                        }
+
+                                  }
+                               }
+
                            }
                            Row(
                                modifier = Modifier
