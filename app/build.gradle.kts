@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+
 android {
     namespace = "com.example.krogerdanieltalks"
     compileSdk = 35
@@ -36,12 +37,13 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
 dependencies {
     //Zxing
-    //implementation ("com.google.zxing:core:4.3.0")
+    implementation ("com.journeyapps:zxing-android-embedded:4.3.0")
     //Compose ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     //Compose LiveData
@@ -58,8 +60,11 @@ dependencies {
     //Coil image loader
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
+    implementation ("androidx.activity:activity:1.9.3")
+    implementation ("androidx.fragment:fragment:1.8.5")
 
     //Default dependencies
+    implementation(libs.qr.scanner)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -68,6 +73,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

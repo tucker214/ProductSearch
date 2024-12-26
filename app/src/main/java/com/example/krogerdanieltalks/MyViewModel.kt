@@ -41,11 +41,21 @@ class MyViewModel : ViewModel(){
 
     }
 
-    suspend fun getProduct()
+    suspend fun getProduct(upc: String)
     {
-        _productId.value = RetrofitClient.krogerAPIService.
-        getProduct("0001111041600", "Bearer ${_accessToken.value!!}",
-            LOCATION_ID_ARL_HEIGHTS).toString()
+        try {
+            _productId.value = RetrofitClient.krogerAPIService.
+            getProduct(upc, "Bearer ${_accessToken.value!!}",
+                LOCATION_ID_ARL_HEIGHTS).toString()
+        } catch (e: retrofit2.HttpException)
+        {
+            e.printStackTrace()
+            getToken()
+            _productId.value = RetrofitClient.krogerAPIService.
+            getProduct(upc, "Bearer ${_accessToken.value!!}",
+                LOCATION_ID_ARL_HEIGHTS).toString()
+        }
+
     }
 
     suspend fun searchProductByTerm(term: String)
@@ -62,6 +72,9 @@ class MyViewModel : ViewModel(){
             _productTermData.value = RetrofitClient.krogerAPIService
                 .searchProductByTerm("Bearer ${_accessToken.value!!}",
                     term, LOCATION_ID_ARL_HEIGHTS, "50")
+        } catch (e: java.net.SocketTimeoutException)
+        {
+            e.printStackTrace()
         }
 
 
@@ -73,8 +86,16 @@ class MyViewModel : ViewModel(){
     {
         _productTerm.value = string
         viewModelScope.launch { searchProductByTerm(_productTerm.value!!) }
-        Log.d("Whereisdata", _productTerm.value!!)
+        Log.d("Whereisterm", _productTerm.value!!)
 
+    }
+
+    fun setUpc(upc: String)
+    {
+        _productId.value = upc
+        if (upc.length == 13)
+            viewModelScope.launch { getProduct(_productId.value!!) }
+        Log.d("Whereisupc", _productId.value!!)
     }
 
 }

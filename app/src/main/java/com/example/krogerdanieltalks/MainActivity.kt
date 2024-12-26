@@ -1,13 +1,26 @@
 package com.example.krogerdanieltalks
 
+import android.app.Activity
+import android.app.ComponentCaller
+import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Paint.Align
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import android.widget.Scroller
+import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.registerForActivityResult
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +46,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -43,64 +57,122 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.substring
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.krogerdanieltalks.apiModels.token.productTerm.Data
 import com.example.krogerdanieltalks.ui.theme.KrogerDanielTalksTheme
+import com.example.krogerdanieltalks.utils.Constants.Companion.c_upc
 import kotlinx.coroutines.launch
+import com.google.zxing.*
+import com.google.zxing.client.android.Intents.Scan
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanIntentResult
+import com.journeyapps.barcodescanner.ScanOptions
+import org.w3c.dom.Text
+import java.lang.reflect.TypeVariable
+import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
-
+lateinit var zxing: String
 class MainActivity : ComponentActivity() {
-    val viewModel: MyViewModel = MyViewModel()
+    private val viewModel: MyViewModel = MyViewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
+        {
+                result: ActivityResult ->
+
+            if (result.resultCode == RESULT_OK)
+            {
+                val intent = result.data
+                zxing = intent?.getStringExtra("upcA")!!.toString()
+                Log.d("part-1", zxing)
+            }
+        }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             KrogerDanielTalksTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    KrogerData(
-                        modifier = Modifier.padding(innerPadding), viewModel = viewModel()
-                    )
+                    var shouldScan = remember { mutableStateOf(false) }
 
+                    KrogerData(
+                        modifier = Modifier.padding(innerPadding), viewModel = viewModel(), shouldScan
+                    )
+                    if (shouldScan.value)
+                    {
+
+                        shouldScan.value = false
+                        val data = Intent(this, MainActivity2::class.java)
+                        startForResult.launch(data)
+                        zxing = data.getStringExtra("upcA").toString()
+                        Log.d("part-2", zxing)
+                    }
                     val preferences: SharedPreferences = getSharedPreferences("myPrefs", MODE_PRIVATE)
                     preferences.edit().putString("access_token", viewModel.accessToken.observeAsState().value).apply()
 
                   Log.d("Token: ", "My Token: ${preferences.getString("access_token", "")}")
+
                 }
             }
         }
+
+    }
+
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?,
+        caller: ComponentCaller
+    ) {
+        if (resultCode == RESULT_OK)
+        {
+            zxing = data?.getStringExtra("upcA")!!
+        }
+
+    }
+
+    override fun onResume()
+    {
+        super.onResume()
+        viewModel.viewModelScope.launch { viewModel.getToken() }
     }
 }
 
 @Composable
-fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel()) {
+fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel(), shouldScan: MutableState<Boolean>) {
+    zxing = "testing"
+    val scanLauncher = rememberLauncherForActivityResult(contract = ScanContract(),
+        onResult = {result->
+            if (result.contents != null )
+                viewModel.setTerm("00" + result.contents.substring(0, result.contents.length - 1))})
 
-    //val data = viewModel.krogerData.observeAsState().value
-    //val token = viewModel.accessToken.observeAsState().value
-    //val product = viewModel.productId.observeAsState().value
+    var barcode = remember { mutableStateOf(c_upc) }
+    var mContext = LocalContext.current
     val productTerm = viewModel.productTerm.observeAsState().value
     var productTermData = viewModel.productTermData.observeAsState().value!!.data
     var productMediumImageUrl = ""
     var test : String
-    var newSearch = false
-    var isRefresh = false
-    var canSearch = true
    if(productTermData != null) {
 
        var itemTerm = remember {
@@ -117,16 +189,29 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    .fillMaxWidth()
                    .padding(0.dp, 30.dp, 0.dp, 15.dp)
            ) {
+               Button(onClick = {
+                   //mContext.startActivity(Intent(mContext, MainActivity2::class.java))
+                //shouldScan.value = true
+                   scanLauncher.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.UPC_A))
+               }){
+               }
+               if (viewModel.productId.value!!.length == 13)
+                   viewModel.setTerm(viewModel.productId.value!!)
+               zxing = c_upc
+               Log.d("barcode123", barcode.value)
+               Log.d("barcode123", zxing)
+
                OutlinedTextField(value = itemTerm.value, onValueChange = { text ->
                    itemTerm.value = text
                },
-                   Modifier.width(240.dp),
+                   Modifier.size(240.dp, 50.dp),
                    textStyle = TextStyle(color = Color.Black),
-                   placeholder = {Text("Enter item to search")},
+                   placeholder = {Text("Search items")},
                    trailingIcon = {Icon(Icons.Default.Clear,
                        contentDescription = "clear text",
                        modifier = Modifier.clickable { itemTerm.value = "" },
-                       tint = Color.Black)}
+                       tint = Color.Black)},
+                   shape = RoundedCornerShape(50)
 
 
                )
@@ -136,12 +221,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    if (itemTerm.value.isNotEmpty())
                        if (itemTerm.value.length >= 3) {
                            viewModel.setTerm(itemTerm.value)
-                           newSearch = true
-                           canSearch = true
                        }
-                   else{
-                       canSearch = false
-                   }
                }) {
                    Text(text = "Search",
                        maxLines = 1,
@@ -299,6 +379,20 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                                .wrapContentHeight()
                                                .align(Alignment.Bottom)
                                        )
+
+                                   else
+                                   {
+                                       val department = productTermData!![i].taxonomies!![0].department
+                                       Text(
+                                           fontWeight = FontWeight.Bold,
+                                           text = "DEP: {$department}",
+                                           fontSize = 14.sp,
+                                           modifier = Modifier
+                                               .padding(10.dp, 0.dp, 10.dp, 10.dp)
+                                               .wrapContentHeight()
+                                               .align(Alignment.Bottom)
+                                       )
+                                   }
                                }
                                    Text(
                                        fontWeight = FontWeight.Bold,
@@ -324,36 +418,18 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    }
                }
            }
-
-
        }
        }
    }
 }
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     KrogerDanielTalksTheme {
-        KrogerData()
-//        Column(horizontalAlignment = Alignment.End,
-//        verticalArrangement = Arrangement.Center,
-//            modifier = Modifier.fillMaxSize()){
-//            Text(text= "hello", color = Color.Blue )
-//            Text(text= "What's up", color = Color.Blue )
-//        }
-/*        LazyRow (modifier = Modifier.fillMaxSize()){
-            items(10)
-            { i ->
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(100.dp)
-                )
-            }
-        }*/
+        KrogerData(shouldScan = remember { mutableStateOf(false) } )
     }
-}
+}*/
 
 @Composable
 fun refreshData(viewModel: MyViewModel, data : List<Data>?) : List<Data>? {
@@ -361,7 +437,4 @@ fun refreshData(viewModel: MyViewModel, data : List<Data>?) : List<Data>? {
 
 }
 
-fun resetScroll()
-{
 
-}

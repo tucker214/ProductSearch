@@ -53,7 +53,7 @@ object RetrofitClient {
                 val bodyString = response.body.toString()
 
                 return response.newBuilder()
-                    .body(ResponseBody.create(response.body?.contentType(), bodyString))
+                    .body(bodyString.toResponseBody(response.body?.contentType()))
                     .build()
             } catch (e: Exception) {
                 e.printStackTrace()
