@@ -81,6 +81,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.substring
 import androidx.compose.ui.tooling.preview.Preview
@@ -172,10 +173,13 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel(), shouldScan: MutableState<Boolean>) {
     zxing = "testing"
+    val queries = remember { mutableStateOf(0) }
     val scanLauncher = rememberLauncherForActivityResult(contract = ScanContract(),
         onResult = {result->
+            queries.value++
             if (result.contents != null )
-                viewModel.setTerm("00" + result.contents.substring(0, result.contents.length - 1))})
+                viewModel.setTerm("00" + result.contents.substring(0, result.contents.length - 1))
+        })
 
     var barcode = remember { mutableStateOf(c_upc) }
     var mContext = LocalContext.current
@@ -210,11 +214,6 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    .fillMaxWidth()
                    .padding(0.dp, 30.dp, 0.dp, 15.dp)
            ) {
-               if (viewModel.productId.value!!.length == 13)
-                   viewModel.setTerm(viewModel.productId.value!!)
-               zxing = c_upc
-               Log.d("barcode123", barcode.value)
-               Log.d("barcode123", zxing)
 
                OutlinedTextField(value = itemTerm.value, onValueChange = { text ->
                    itemTerm.value = text
@@ -247,10 +246,12 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
                    keyboardActions = KeyboardActions(onSearch =
                    {
+                       queries.value++
                        if (itemTerm.value.isNotEmpty())
                            if (itemTerm.value.length >= 3) {
                                viewModel.setTerm(itemTerm.value)
                                viewModel.updateScrollToTop(true)
+
                            }
 
                    })
@@ -258,10 +259,12 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                Spacer(modifier = Modifier.width(10.dp))
 
                Button(onClick = {
+                   queries.value++
                    if (itemTerm.value.isNotEmpty())
                        if (itemTerm.value.length >= 3) {
                            viewModel.setTerm(itemTerm.value)
                            viewModel.updateScrollToTop(true)
+
                        }
                }) {
                    Text(text = "Search",
@@ -280,7 +283,24 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
 
            items(1)
            { item ->
+               if (productTermData.isNullOrEmpty() && queries.value > 0)
+               {
+                   Row (modifier = Modifier
+                       .wrapContentSize()
+                       .fillMaxSize(),
+                       verticalAlignment = Alignment.CenterVertically,
+                       horizontalArrangement = Arrangement.Center){
+                       Text(
+                           "No item found",modifier = Modifier
+                               .wrapContentWidth()
+                               .wrapContentHeight(), textAlign = TextAlign.Center,
+                           fontWeight = FontWeight.SemiBold
+                       )
+                   }
+               }
+               else
                for (i in 0..<productTermData!!.size) {
+
                    //pop up box
                    var showPopUp = remember { mutableStateOf(false) }
                    var stockLevel : String?
@@ -393,11 +413,13 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                {
                                   if (productTermData!![i].items!![0].price != null)
                                   {
-                                      Box (modifier = Modifier.align(Alignment.Bottom)
+                                      Box (modifier = Modifier
+                                          .align(Alignment.Bottom)
                                           .background(color = Color.White)
+                                          .height(30.dp)
                                           .wrapContentWidth()
                                           .wrapContentHeight()
-                                          .height(27.dp)
+
                                           .align(Alignment.Bottom)
                                       ) {
                                           Text(
@@ -405,28 +427,33 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                               fontWeight = FontWeight.SemiBold,
                                               fontSize = 14.sp,
                                               modifier = Modifier
-                                                  .padding(10.dp, 0.dp, 10.dp, 10.dp)
+                                                  .padding(10.dp, 0.dp, 10.dp, 0.dp)
                                                   .wrapContentHeight()
                                                   .wrapContentWidth()
+                                                  .align(Alignment.Center)
 
                                           )
                                       }
 
                                         if (productTermData!![i].items!![0].price?.promo?.toInt() != 0) {
-                                            Box (modifier = Modifier.align(Alignment.Bottom)
+                                            Box (modifier = Modifier
+                                                .clip(RoundedCornerShape(30))
+                                                .align(Alignment.Bottom)
                                                 .background(color = Color.Yellow)
+                                                .height(30.dp)
                                                 .wrapContentWidth()
                                                 .wrapContentHeight()
-                                                .height(27.dp)
+
                                                 ){
                                                 Text(
                                                     "Sale: $" + productTermData!![i].items!![0].price?.promo.toString(),
                                                     fontWeight = FontWeight.SemiBold,
                                                     fontSize = 14.sp,
                                                     modifier = Modifier
-                                                        .padding(10.dp, 0.dp, 10.dp, 10.dp)
+                                                        .padding(10.dp, 0.dp, 10.dp, 0.dp)
                                                         .wrapContentHeight()
                                                         .wrapContentWidth()
+                                                        .align(Alignment.Center)
 
 
                                                 )
