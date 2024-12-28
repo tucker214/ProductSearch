@@ -173,12 +173,43 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel(), shouldScan: MutableState<Boolean>) {
     zxing = "testing"
+    var itemTerm = remember {
+        mutableStateOf("")
+    }
     val queries = remember { mutableStateOf(0) }
     val scanLauncher = rememberLauncherForActivityResult(contract = ScanContract(),
         onResult = {result->
             queries.value++
-            if (result.contents != null )
-                viewModel.setTerm("00" + result.contents.substring(0, result.contents.length - 1))
+            if (result.contents != null ) {
+                when (result.contents.length) {
+                    12 -> {
+                        viewModel.setTerm(
+                            "00" + result.contents.substring(
+                                0,
+                                result.contents.length - 1
+                            )
+                        )
+                        itemTerm.value = "00" + result.contents.substring(
+                            0,
+                            result.contents.length - 1
+                        )
+                    }
+                    14 -> {
+                        viewModel.setTerm(result.contents.substring(0, result.contents.length - 1))
+                        itemTerm.value = result.contents.substring(0, result.contents.length - 1)
+                    }
+                    13 -> {
+                        viewModel.setTerm(result.contents)
+                        itemTerm.value = result.contents
+                    }
+                    8 -> {
+                        viewModel.setTerm("00" + result.contents.substring(0, 2) + "00000" +  result.contents.substring(3, 5))
+                        itemTerm.value = "00" + result.contents.substring(0, 3) + "00000" +  result.contents.substring(3, 6)
+                    }
+                    else ->{ itemTerm.value = result.contents }
+                }
+
+            }
         })
 
     var barcode = remember { mutableStateOf(c_upc) }
@@ -200,9 +231,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
 
    if(productTermData != null) {
 
-       var itemTerm = remember {
-           mutableStateOf("")
-       }
+
 
        Column(
            modifier = Modifier
@@ -236,7 +265,7 @@ fun KrogerData(modifier: Modifier = Modifier, viewModel: MyViewModel = viewModel
                                painter = painterResource(R.drawable.ic_action_name),
                                contentDescription = "clear text",
                                modifier = Modifier.clickable {
-                                   scanLauncher.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.UPC_A)) },
+                                   scanLauncher.launch(ScanOptions().setDesiredBarcodeFormats(ScanOptions.ALL_CODE_TYPES)) },
                                tint = Color.Black,
                            )
 
