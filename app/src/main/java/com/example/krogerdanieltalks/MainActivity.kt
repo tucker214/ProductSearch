@@ -21,6 +21,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.registerForActivityResult
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -109,6 +110,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MyViewModel = MyViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
         {
                 result: ActivityResult ->
@@ -120,8 +122,10 @@ class MainActivity : ComponentActivity() {
                 Log.d("part-1", zxing)
             }
         }
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             KrogerDanielTalksTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

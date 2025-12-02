@@ -47,6 +47,7 @@ class MyViewModel : ViewModel(){
     suspend fun getProduct(upc: String)
     {
         try {
+            getToken()
             _productId.value = RetrofitClient.krogerAPIService.
             getProduct(upc, "Bearer ${_accessToken.value!!}",
                 LOCATION_ID_ARL_HEIGHTS).toString()
@@ -63,7 +64,9 @@ class MyViewModel : ViewModel(){
 
     suspend fun searchProductByTerm(term: String)
     {
+
         try {
+
                 _productTermData.value = RetrofitClient.krogerAPIService
                 .searchProductByTerm("Bearer ${_accessToken.value!!}",
                     term, LOCATION_ID_ARL_HEIGHTS, "50")
@@ -71,11 +74,15 @@ class MyViewModel : ViewModel(){
         {
             e.printStackTrace()
             getToken()
-            Log.d("ExceptionInvalidToken", "Invalid Token")
-            _productTermData.value = RetrofitClient.krogerAPIService
-                .searchProductByTerm("Bearer ${_accessToken.value!!}",
+            Log.d("HttpException", _accessToken.value!!)
+
+           _productTermData.value = RetrofitClient.krogerAPIService
+             .searchProductByTerm("Bearer ${_accessToken.value!!}",
                     term, LOCATION_ID_ARL_HEIGHTS, "50")
         } catch (e: java.net.SocketTimeoutException)
+        {
+            e.printStackTrace()
+        } catch (e: Exception)
         {
             e.printStackTrace()
         }

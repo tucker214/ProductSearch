@@ -60,7 +60,7 @@ object RetrofitClient {
                 var msg = ""
                 when (e) {
                     is retrofit2.HttpException -> {
-                        msg = "Invalid Token"
+                        msg = "Bad HTTP Request"
                     }
                     
                     is SocketTimeoutException -> {
@@ -84,7 +84,7 @@ object RetrofitClient {
                     }
 
                     else -> {
-                        msg = "${e.message}"
+                        msg = "Other exception: ${e.message}"
                     }
                 }
 

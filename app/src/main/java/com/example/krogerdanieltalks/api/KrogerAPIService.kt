@@ -15,8 +15,7 @@ interface KrogerAPIService {
 
 
     @Headers("Content-Type: application/x-www-form-urlencoded",
-        "Authorization: $CREDENTIALS_ENCODED",
-        "User-Agent: productlocator")
+        "Authorization: Basic $CREDENTIALS_ENCODED")
     @POST("/v1/connect/oauth2/token")
     suspend fun getToken(
         @Query("grant_type") clientCredentials: String,
@@ -31,7 +30,7 @@ interface KrogerAPIService {
                            @Query("filter.locationId") locationId: String) : ProductId
 
     @Headers("Accept: application/json")
-    @GET("v1/products/")
+    @GET("/v1/products")
     suspend fun searchProductByTerm(@Header("Authorization") token: String,
 //                                    @Query("filter.brand") brand: String,
                                     @Query("filter.term") term: String,
